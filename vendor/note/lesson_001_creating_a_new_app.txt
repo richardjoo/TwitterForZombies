@@ -1,0 +1,113 @@
+before creating any, if you type `rails` only, it will display help for rails
+
+rails new TwitterForZombies
+cd TwitterForZombies
+
+if you type `rails` inside of TwitterForZombies folder, it will give you different help on what kind of command you can run with rails
+
+
+
+starting with a scaffold
+--------------------------
+rails g scaffold zombie name:string bio:text age:integer
+
+after the scaffolding is done, if you try to run
+  rails s
+
+you will get an error because you did not run the migration.
+  rake db:migrate
+
+now you can run
+  rails s
+
+and you will be able to view zombies page
+  http://localhost:3000/zombies
+
+now let's play with rails console
+  rails c
+
+from rails c, we can create a new zombie
+  > Zombie.create(name: "Eric Allam", age: 27)
+
+  (0.3ms)  begin transaction
+  SQL (1.6ms)  INSERT INTO "zombies" ("age", "created_at", "name", "updated_at") VALUES (?, ?, ?, ?)  [["age", 27], ["created_at", "2015-01-28 07:41:50.040199"], ["name", "Eric Allam"], ["updated_at", "2015-01-28 07:41:50.040199"]]
+   (165.1ms)  commit transaction
+ => #<Zombie id: 1, name: "Eric Allam", bio: nil, age: 27, created_at: "2015-01-28 07:41:50", updated_at: "2015-01-28 07:41:50">
+2.1.1 :002 >
+
+  > z = Zombie.first
+
+    Zombie Load (0.7ms)  SELECT  "zombies".* FROM "zombies"   ORDER BY "zombies"."id" ASC LIMIT 1
+ => #<Zombie id: 1, name: "Eric Allam", bio: nil, age: 27, created_at: "2015-01-28 07:41:50", updated_at: "2015-01-28 07:41:50">
+
+we can change the name:
+2.1.1 :003 > z.name = "Caole Souza"
+ => "Caole Souza"
+
+and save:
+2.1.1 :005 > z.save
+   (0.5ms)  begin transaction
+  SQL (1.3ms)  UPDATE "zombies" SET "name" = ?, "updated_at" = ? WHERE "zombies"."id" = 1  [["name", "Caole Souza"], ["updated_at", "2015-01-28 07:44:00.048037"]]
+   (68.2ms)  commit transaction
+ => true
+2.1.1 :006 >
+
+
+
+Adding Columns
+----------------
+rails g migration AddEmailAndrottingToZombies email:string rotting:boolean
+
+you can add default values, limit, null: true or false, first:true or  after: :email, or unique: true
+
+initial code
+class AddEmailAndrottingToZombies < ActiveRecord::Migration
+  def change
+    add_column :zombies, :email, :string
+    add_column :zombies, :rotting, :boolean
+  end
+end
+
+add default to rotting
+class AddEmailAndrottingToZombies < ActiveRecord::Migration
+  def change
+    add_column :zombies, :email, :string
+    add_column :zombies, :rotting, :boolean, default: false
+  end
+end
+
+
+now, when you have hundreds of migrations, it does not make sense to run that all the time.
+since rails creates db/schema.rb, you can simply run
+  rake db:setup
+
+this will create the db, loads schema, and seed
+
+
+how do we remove column?
+  rails g migration RemoveAgeFromZombies age:integer
+
+it is following specific pattern here
+Remove<Anything>From<Table name> = RemoveAgeFromZombies
+and rails will generate the code accordingly.
+
+class RemoveAgeFromZombies < ActiveRecord::Migration
+  def change
+    remove_column :zombies, :age, :integer
+  end
+end
+
+and we change this to
+class RemoveAgeFromZombies < ActiveRecord::Migration
+  def up
+    remove_column :zombies, :age, :integer
+  end
+
+  def down
+    add_column :zombies, :age, :integer
+  end
+end
+
+
+now let's create a migration that drops the whole zombie table
+  rails g migration DropZombiesTable
